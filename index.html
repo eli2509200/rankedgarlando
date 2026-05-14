@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ Futbolito Ranked</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --green: #16a34a; --green-light: #dcfce7; --green-dark: #14532d;
+    --gold: #d97706; --gold-light: #fef3c7; --gold-dark: #78350f;
+    --red: #dc2626; --red-light: #fee2e2; --red-dark: #7f1d1d;
+    --blue: #2563eb; --blue-light: #dbeafe; --blue-dark: #1e3a8a;
+    --purple: #7c3aed; --purple-light: #ede9fe;
+    --gray: #6b7280; --gray-light: #f9fafb; --gray-200: #e5e7eb;
+    --bg: #0f172a; --surface: #1e293b; --surface2: #283548; --border: #334155;
+    --text: #f1f5f9; --text2: #94a3b8; --text3: #64748b;
+    --accent: #22d3ee; --accent2: #0891b2;
+    --radius: 12px; --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── HEADER ── */
+  .app-header {
+    background: linear-gradient(135deg, #0c1a2e 0%, #0f2744 50%, #0c1a2e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .logo { font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+  .logo span { color: var(--text); }
+  .header-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 12px; color: var(--text2); }
+
+  /* ── NAV ── */
+  .nav-bar {
+    display: flex; gap: 4px; padding: 12px 16px; background: var(--surface);
+    border-bottom: 1px solid var(--border); overflow-x: auto; position: sticky; top: 57px; z-index: 40;
+  }
+  .nav-bar::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    padding: 8px 16px; border-radius: 20px; border: 1px solid transparent;
+    background: transparent; color: var(--text2); font-size: 13px; font-weight: 500;
+    cursor: pointer; white-space: nowrap; transition: all 0.2s; font-family: 'Inter', sans-serif;
+  }
+  .nav-btn:hover { background: var(--surface2); color: var(--text); }
+  .nav-btn.active { background: var(--accent2); color: white; border-color: var(--accent); }
+
+  /* ── SECTIONS ── */
+  .section { display: none; padding: 16px; max-width: 720px; margin: 0 auto; }
+  .section.active { display: block; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+  }
+  .card-title { font-family: 'Rajdhani', sans-serif; font-size: 17px; font-weight: 600; color: var(--accent); margin-bottom: 12px; letter-spacing: 0.5px; }
+
+  /* ── STATS ROW ── */
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; text-align: center; }
+  .stat-num { font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700; color: var(--accent); line-height: 1; }
+  .stat-label { font-size: 11px; color: var(--text2); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── RANKING TABLE ── */
+  .rank-list { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .rank-row {
+    display: flex; align-items: center; gap: 10px; padding: 11px 14px;
+    border-bottom: 1px solid var(--border); background: var(--surface);
+    transition: background 0.15s; cursor: default;
+  }
+  .rank-row:last-child { border-bottom: none; }
+  .rank-row:hover { background: var(--surface2); }
+  .rank-row.top1 { background: linear-gradient(90deg, #1c1200 0%, var(--surface) 70%); border-left: 3px solid var(--gold); }
+  .rank-row.top2 { background: linear-gradient(90deg, #12151a 0%, var(--surface) 70%); border-left: 3px solid #94a3b8; }
+  .rank-row.top3 { background: linear-gradient(90deg, #1a0d05 0%, var(--surface) 70%); border-left: 3px solid #b45309; }
+  .rank-pos { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; min-width: 32px; text-align: center; color: var(--text3); }
+  .rank-pos.gold { color: var(--gold); }
+  .rank-pos.silver { color: #94a3b8; }
+  .rank-pos.bronze { color: #b45309; }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 13px; border: 2px solid var(--border);
+  }
+  .rank-info { flex: 1; min-width: 0; }
+  .rank-name { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rank-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .rank-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .pos-change { font-size: 12px; font-weight: 600; }
+  .up { color: var(--green); } .down { color: var(--red); } .same { color: var(--text3); }
+
+  /* ── BADGES ── */
+  .badge { font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 500; display: inline-block; }
+  .badge-shield { background: #1e3a5f; color: #60a5fa; border: 1px solid #2563eb; }
+  .badge-pause  { background: #2d1b69; color: #a78bfa; border: 1px solid #7c3aed; }
+  .badge-active { background: #14532d; color: #4ade80; border: 1px solid #16a34a; }
+  .badge-cooldown { background: #451a03; color: #fbbf24; border: 1px solid #d97706; }
+  .badge-strike { background: #450a0a; color: #f87171; border: 1px solid #dc2626; }
+  .badges-row { display: flex; gap: 4px; flex-wrap: wrap; }
+
+  /* ── FORMS ── */
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-group input, .form-group select {
+    width: 100%; padding: 10px 12px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text); font-size: 14px; font-family: 'Inter', sans-serif; outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+  .form-group select option { background: var(--surface2); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    padding: 10px 20px; border-radius: var(--radius-sm); border: none;
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif;
+    transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary { background: var(--accent2); color: white; width: 100%; justify-content: center; }
+  .btn-primary:hover { background: var(--accent); color: #0f172a; }
+  .btn-danger { background: var(--red); color: white; }
+  .btn-danger:hover { background: var(--red-dark); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-success { background: var(--green); color: white; }
+  .btn-success:hover { background: var(--green-dark); }
+
+  /* ── CHALLENGE CARDS ── */
+  .ch-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px; margin-bottom: 10px;
+  }
+  .ch-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .ch-players { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); }
+  .ch-players .vs { color: var(--accent); margin: 0 6px; }
+  .ch-meta { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .ch-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .strikes-display { display: flex; gap: 4px; align-items: center; margin-top: 6px; }
+  .strike-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+  .strike-dot.used { background: var(--red); }
+
+  /* ── MATCH HISTORY ── */
+  .match-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .match-item:last-child { border-bottom: none; }
+  .match-winner { font-weight: 600; color: var(--green); }
+  .match-loser { color: var(--text3); }
+  .match-date { font-size: 11px; color: var(--text3); }
+  .match-format { font-size: 11px; background: var(--surface2); border: 1px solid var(--border); padding: 2px 7px; border-radius: 20px; color: var(--text2); }
+
+  /* ── LIVE MATCH ── */
+  .live-match-box {
+    background: linear-gradient(135deg, #0c2340, #0f172a);
+    border: 1px solid var(--accent2); border-radius: var(--radius);
+    padding: 20px; text-align: center; margin-bottom: 12px;
+  }
+  .live-title { font-family: 'Rajdhani', sans-serif; font-size: 13px; letter-spacing: 3px; color: var(--accent); margin-bottom: 16px; }
+  .live-players { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 20px; }
+  .live-player { text-align: center; flex: 1; }
+  .live-player .name { font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; color: var(--text); }
+  .live-player .pos-tag { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .live-vs { font-family: 'Rajdhani', sans-serif; font-size: 32px; font-weight: 700; color: var(--accent); }
+  .format-pill { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 14px; font-size: 12px; color: var(--text2); margin-bottom: 16px; }
+  .winner-btns { display: flex; gap: 10px; justify-content: center; }
+  .winner-btn {
+    flex: 1; max-width: 200px; padding: 12px; border-radius: var(--radius-sm);
+    font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+    cursor: pointer; border: 2px solid transparent; transition: all 0.2s;
+  }
+  .winner-btn.left { background: #0f2e1a; color: var(--green); border-color: var(--green); }
+  .winner-btn.left:hover { background: var(--green); color: white; }
+  .winner-btn.right { background: #2e0f0f; color: var(--red); border-color: var(--red); }
+  .winner-btn.right:hover { background: var(--red); color: white; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100;
+    display: none; align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 24px; max-width: 400px; width: 100%; animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+  .modal-title { font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 10px; color: var(--accent); }
+  .modal-body { font-size: 14px; color: var(--text2); line-height: 1.7; margin-bottom: 18px; }
+  .modal-actions { display: flex; gap: 8px; }
+  .modal-actions .btn { flex: 1; justify-content: center; }
+
+  /* ── RESULT MODAL ── */
+  .result-box { text-align: center; padding: 20px 0; }
+  .result-emoji { font-size: 52px; margin-bottom: 8px; }
+  .result-headline { font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .result-detail { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #1e293b; border: 1px solid var(--border); color: var(--text);
+    padding: 10px 20px; border-radius: 20px; font-size: 13px; z-index: 200;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap;
+    max-width: 90vw; text-align: center;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ── SECTION HEADER ── */
+  .section-header { margin-bottom: 14px; }
+  .section-header h2 { font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700; color: var(--text); }
+  .section-header p { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+  /* ── RULE ITEMS ── */
+  .rule-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .rule-item:last-child { border-bottom: none; }
+  .rule-title { font-weight: 600; font-size: 14px; color: var(--accent); margin-bottom: 4px; }
+  .rule-body { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align: center; padding: 32px; color: var(--text3); font-size: 14px; }
+  .empty-icon { font-size: 36px; margin-bottom: 8px; }
+
+  /* ── DIVIDER ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  /* ── PROFILE CARD ── */
+  .profile-header { display: flex; align-items: center; gap: 14px; padding: 16px; }
+  .profile-avatar { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; border: 3px solid var(--accent); flex-shrink: 0; }
+  .profile-name { font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700; color: var(--text); }
+  .profile-pos { font-size: 13px; color: var(--text2); }
+
+  @media (max-width: 480px) {
+    .stats-row { grid-template-columns: repeat(3, 1fr); }
+    .rank-row { padding: 10px 10px; gap: 8px; }
+    .section { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="logo">⚽ FUTBOL<span>ITO</span></div>
+  <div class="header-badge" id="header-date"></div>
+</div>
+
+<div class="nav-bar">
+  <button class="nav-btn active" onclick="nav('ranking')">🏆 Ranking</button>
+  <button class="nav-btn" onclick="nav('partido')">⚽ Partido</button>
+  <button class="nav-btn" onclick="nav('desafios')">⚡ Desafíos</button>
+  <button class="nav-btn" onclick="nav('historial')">📋 Historial</button>
+  <button class="nav-btn" onclick="nav('jugadores')">👤 Jugadores</button>
+  <button class="nav-btn" onclick="nav('reglamento')">📜 Reglamento</button>
+</div>
+
+<!-- ═══════════════════ RANKING ═══════════════════ -->
+<div id="sec-ranking" class="section active">
+  <div class="section-header"><h2>Tabla de Ranking</h2><p>Posiciones actuales del torneo</p></div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-num" id="s-players">0</div><div class="stat-label">Jugadores</div></div>
+    <div class="stat-box"><div class="stat-num" id="s-matches">0</div><div class="stat-label">Partidos</div></div>
+    <div class="stat-box"><div class="stat-num" id="s-challenges">0</div><div class="stat-label">Desafíos</div></div>
+  </div>
+  <div class="rank-list" id="rank-list"></div>
+</div>
+
+<!-- ═══════════════════ PARTIDO ═══════════════════ -->
+<div id="sec-partido" class="section">
+  <div class="section-header"><h2>Registrar Partido</h2><p>Inicia un partido y declara al ganador</p></div>
+
+  <div id="partido-form-box" class="card">
+    <div class="card-title">⚽ Nuevo Partido</div>
+    <div class="form-group">
+      <label>Jugador 1 (Retador / Iniciador)</label>
+      <select id="p-player1"></select>
+    </div>
+    <div class="form-group">
+      <label>Jugador 2</label>
+      <select id="p-player2"></select>
+    </div>
+    <div class="form-group">
+      <label>Formato</label>
+      <select id="p-format">
+        <option value="Clásico">Clásico — Mejor de 3 (a 5 goles)</option>
+        <option value="Maratón">Maratón — Mejor de 5 (a 5 goles)</option>
+        <option value="Relámpago">Relámpago — 1 partido a 7 goles</option>
+        <option value="Resistencia">Resistencia — Mejor de 5 (a 3 goles)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>¿Es un desafío de rango? (Retador vs inmediato superior)</label>
+      <select id="p-ranked">
+        <option value="yes">Sí — Partido Ranked (el rango cambia)</option>
+        <option value="no">No — Amistoso (sin cambio de rango)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Desafío asociado (opcional)</label>
+      <select id="p-challenge-link">
+        <option value="">Sin desafío vinculado</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="startMatch()">Iniciar partido ▶</button>
+  </div>
+
+  <div id="live-match-box" style="display:none">
+    <div class="live-match-box">
+      <div class="live-title">🔴 PARTIDO EN VIVO</div>
+      <div class="live-players">
+        <div class="live-player">
+          <div class="avatar" id="lm-av1" style="width:52px;height:52px;font-size:18px;margin:0 auto 8px"></div>
+          <div class="name" id="lm-name1"></div>
+          <div class="pos-tag" id="lm-pos1"></div>
+        </div>
+        <div class="live-vs">VS</div>
+        <div class="live-player">
+          <div class="avatar" id="lm-av2" style="width:52px;height:52px;font-size:18px;margin:0 auto 8px"></div>
+          <div class="name" id="lm-name2"></div>
+          <div class="pos-tag" id="lm-pos2"></div>
+        </div>
+      </div>
+      <div class="format-pill" id="lm-format"></div>
+      <div style="margin-bottom:16px;font-size:13px;color:var(--text2)" id="lm-ranked-label"></div>
+      <div class="winner-btns">
+        <button class="winner-btn left" id="lm-btn1" onclick="declareWinner(0)"></button>
+        <button class="winner-btn right" id="lm-btn2" onclick="declareWinner(1)"></button>
+      </div>
+    </div>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="cancelMatch()">Cancelar partido</button>
+  </div>
+</div>
+
+<!-- ═══════════════════ DESAFÍOS ═══════════════════ -->
+<div id="sec-desafios" class="section">
+  <div class="section-header"><h2>Desafíos de Rango</h2><p>Reta al jugador inmediatamente superior</p></div>
+
+  <div class="card">
+    <div class="card-title">⚡ Lanzar Desafío Oficial</div>
+    <div class="form-group"><label>Retador (tú)</label><select id="ch-from"></select></div>
+    <div class="form-group"><label>Defensor (rango superior)</label><select id="ch-to"></select></div>
+    <div class="form-group">
+      <label>Formato de juego</label>
+      <select id="ch-format">
+        <option value="Clásico">Clásico — Mejor de 3 (a 5 goles)</option>
+        <option value="Maratón">Maratón — Mejor de 5 (a 5 goles)</option>
+        <option value="Relámpago">Relámpago — 1 partido a 7 goles</option>
+        <option value="Resistencia">Resistencia — Mejor de 5 (a 3 goles)</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="launchChallenge()">Lanzar desafío ⚡</button>
+  </div>
+
+  <div class="card-title" style="margin:16px 0 8px;color:var(--text2);font-size:13px;text-transform:uppercase;letter-spacing:1px;font-family:'Inter',sans-serif">Desafíos activos</div>
+  <div id="challenge-list"></div>
+</div>
+
+<!-- ═══════════════════ HISTORIAL ═══════════════════ -->
+<div id="sec-historial" class="section">
+  <div class="section-header"><h2>Historial de Partidos</h2><p>Todos los resultados registrados</p></div>
+  <div class="rank-list" id="match-list"></div>
+</div>
+
+<!-- ═══════════════════ JUGADORES ═══════════════════ -->
+<div id="sec-jugadores" class="section">
+  <div class="section-header"><h2>Jugadores</h2><p>Gestión del roster</p></div>
+
+  <div class="card">
+    <div class="card-title">➕ Registrar nuevo jugador</div>
+    <div class="form-group"><label>Nombre o apodo</label><input type="text" id="reg-name" placeholder="Ej: El Rayo" /></div>
+    <button class="btn btn-primary" onclick="registerPlayer()">Registrar jugador</button>
+  </div>
+
+  <div class="card-title" style="margin:16px 0 8px;color:var(--text2);font-size:13px;text-transform:uppercase;letter-spacing:1px;font-family:'Inter',sans-serif">Roster completo</div>
+  <div class="rank-list" id="player-mgmt-list"></div>
+</div>
+
+<!-- ═══════════════════ REGLAMENTO ═══════════════════ -->
+<div id="sec-reglamento" class="section">
+  <div class="section-header"><h2>Reglamento Oficial</h2><p>Ranked Futbolito</p></div>
+  <div class="card">
+    <div class="rule-item">
+      <div class="rule-title">1. Ascenso — La Escalera</div>
+      <div class="rule-body">Solo puedes desafiar a la persona que ocupa el rango <strong>inmediatamente superior</strong> (+1). Si el retador gana, ambos intercambian posiciones. Si el defensor gana, ambos mantienen su puesto.</div>
+    </div>
+    <div class="rule-item">
+      <div class="rule-title">2. Escudo de Rango (14 días)</div>
+      <div class="rule-body">Al ganar un puesto (ya sea subiendo o defendiendo exitosamente), el jugador obtiene inmunidad de <strong>14 días naturales</strong> a nuevos desafíos.</div>
+    </div>
+    <div class="rule-item">
+      <div class="rule-title">3. Cooldown de Revancha (10 días)</div>
+      <div class="rule-body">Si pierdes un partido de ascenso como retador, no puedes volver a desafiar a la <strong>misma persona</strong> hasta que pasen 10 días naturales.</div>
+    </div>
+    <div class="rule-item">
+      <div class="rule-title">4. Sistema Dodge (3 Strikes)</div>
+      <div class="rule-body">Strike 1 y 2: el desafiado puede rechazar sin penalización. <strong>Strike 3:</strong> pierde el puesto automáticamente. Los strikes se reinician al completar un partido oficial de defensa.</div>
+    </div>
+    <div class="rule-item">
+      <div class="rule-title">5. Tiempo de Respuesta</div>
+      <div class="rule-body">Tras lanzar un reto, el desafiado tiene <strong>24 horas</strong> para responder. El partido debe ejecutarse en un plazo máximo de <strong>48 a 72 horas</strong>.</div>
+    </div>
+    <div class="rule-item">
+      <div class="rule-title">6. Modo Pausa</div>
+      <div class="rule-body">Se permite pausar el rango por máximo <strong>5 días</strong> por causas de fuerza mayor. Durante la pausa el jugador no puede ser retado ni retar.</div>
+    </div>
+    <div class="rule-item">
+      <div class="rule-title">7. Formatos de Juego</div>
+      <div class="rule-body">
+        <strong>Clásico:</strong> Mejor de 3 (a 5 goles c/u)<br>
+        <strong>Maratón:</strong> Mejor de 5 (a 5 goles c/u)<br>
+        <strong>Relámpago:</strong> 1 partido a 7 goles<br>
+        <strong>Resistencia:</strong> Mejor de 5 (a 3 goles c/u)<br>
+        <strong>Muerte Súbita:</strong> Si empate en último set → Gol de Oro
+      </div>
+    </div>
+    <div class="rule-item" style="border:none">
+      <div class="rule-title">8. Mesa y Reportes</div>
+      <div class="rule-body">En caso de desacuerdo sobre la mesa, el <strong>defensor</strong> elige. El ganador debe reportar el resultado al administrador.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODALS ═══════════════════ -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="modal-confirm">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="result-modal">
+  <div class="modal-box">
+    <div class="result-box">
+      <div class="result-emoji" id="rm-emoji"></div>
+      <div class="result-headline" id="rm-headline"></div>
+      <div class="result-detail" id="rm-detail"></div>
+    </div>
+    <hr class="divider">
+    <button class="btn btn-primary" onclick="closeResultModal()">Ver ranking actualizado</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+//  DATA LAYER — localStorage persistence
+// ═══════════════════════════════════════
+const STORAGE_KEY = 'futbolito_v2';
+
+const AVATAR_PALETTE = [
+  ['#1e3a5f','#60a5fa'],['#14532d','#4ade80'],['#451a03','#fbbf24'],
+  ['#4a044e','#e879f9'],['#7f1d1d','#f87171'],['#0c4a6e','#38bdf8'],
+  ['#365314','#a3e635'],['#1e1b4b','#a5b4fc'],['#422006','#fb923c'],
+  ['#064e3b','#6ee7b7'],['#1c1917','#d6d3d1'],['#2d1b69','#a78bfa'],
+];
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return null;
+}
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ players, challenges, matches }));
+}
+
+function initDefault() {
+  players = [
+    'José fime','Luigi','Victor','Samuel','Maxi','Oscar renaut',
+    'Eli','Hiram','Gael','Julio','Bonilla','Franco','Corpus',
+    'Orlando','Owen','Justin','Jeshua','Vela','Janeth','Georgie','Afu','Tortuga'
+  ].map((name, i) => ({
+    id: i + 1, name, pos: i + 1,
+    wins: 0, losses: 0, strikes: 0,
+    shieldUntil: null, paused: false, pauseUntil: null,
+    cooldowns: {}, // { targetId: isoDate }
+    joined: new Date().toISOString()
+  }));
+  challenges = [];
+  matches = [];
+  nextId = players.length + 1;
+}
+
+let players = [], challenges = [], matches = [], nextId = 1;
+
+(function boot() {
+  const saved = loadData();
+  if (saved && saved.players && saved.players.length) {
+    players = saved.players;
+    challenges = saved.challenges || [];
+    matches = saved.matches || [];
+    nextId = Math.max(...players.map(p => p.id)) + 1;
+  } else {
+    initDefault();
+    saveData();
+  }
+  document.getElementById('header-date').textContent = new Date().toLocaleDateString('es-MX', { weekday:'short', day:'numeric', month:'short' });
+  renderAll();
+})();
+
+// ═══════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════
+function sorted() { return [...players].sort((a,b) => a.pos - b.pos); }
+function getP(id) { return players.find(p => p.id === id); }
+function initials(name) { return name.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+function avatarStyle(id) {
+  const c = AVATAR_PALETTE[(id - 1) % AVATAR_PALETTE.length];
+  return `background:${c[0]};color:${c[1]};`;
+}
+function daysLeft(iso) {
+  if (!iso) return 0;
+  return Math.max(0, Math.ceil((new Date(iso) - new Date()) / 86400000));
+}
+function hasShield(p) { return p.shieldUntil && new Date(p.shieldUntil) > new Date(); }
+function hasCooldown(p, targetId) {
+  if (!p.cooldowns || !p.cooldowns[targetId]) return false;
+  return new Date(p.cooldowns[targetId]) > new Date();
+}
+function setShield(p) {
+  const d = new Date(); d.setDate(d.getDate() + 14);
+  p.shieldUntil = d.toISOString();
+}
+function setCooldown(p, targetId) {
+  if (!p.cooldowns) p.cooldowns = {};
+  const d = new Date(); d.setDate(d.getDate() + 10);
+  p.cooldowns[targetId] = d.toISOString();
+}
+function swapPos(id1, id2) {
+  const a = getP(id1), b = getP(id2);
+  const tmp = a.pos; a.pos = b.pos; b.pos = tmp;
+}
+function fmtDate(iso) {
+  return new Date(iso).toLocaleDateString('es-MX', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+}
+
+// ═══════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════
+const SECTIONS = { ranking:'sec-ranking', partido:'sec-partido', desafios:'sec-desafios', historial:'sec-historial', jugadores:'sec-jugadores', reglamento:'sec-reglamento' };
+function nav(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(SECTIONS[id]).classList.add('active');
+  event.target.classList.add('active');
+  renderAll();
+}
+
+// ═══════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════
+function renderAll() { renderRanking(); renderPartidoForm(); renderChallenges(); renderHistory(); renderPlayerMgmt(); }
+
+function renderRanking() {
+  document.getElementById('s-players').textContent = players.length;
+  document.getElementById('s-matches').textContent = matches.length;
+  document.getElementById('s-challenges').textContent = challenges.filter(c=>c.status==='active').length;
+
+  const list = sorted();
+  document.getElementById('rank-list').innerHTML = list.map((p, i) => {
+    const pos = p.pos;
+    const topClass = pos===1?'top1':pos===2?'top2':pos===3?'top3':'';
+    const numClass = pos===1?'gold':pos===2?'silver':pos===3?'bronze':'';
+    const medal = pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':'';
+    const wr = (p.wins+p.losses)>0 ? Math.round(p.wins/(p.wins+p.losses)*100) : 0;
+    const shDays = hasShield(p) ? daysLeft(p.shieldUntil) : 0;
+    const activeChallenge = challenges.find(c=>c.status==='active'&&(c.toId===p.id||c.fromId===p.id));
+    const badges = [
+      hasShield(p) ? `<span class="badge badge-shield">🛡 Escudo ${shDays}d</span>` : '',
+      p.paused ? `<span class="badge badge-pause">⏸ Pausa</span>` : '',
+      activeChallenge ? `<span class="badge badge-active">⚡ Duelo</span>` : '',
+      p.strikes > 0 ? `<span class="badge badge-strike">${p.strikes} Strike${p.strikes>1?'s':''}</span>` : '',
+    ].filter(Boolean).join('');
+    return `<div class="rank-row ${topClass}">
+      <div class="rank-pos ${numClass}">${medal || pos}</div>
+      <div class="avatar" style="${avatarStyle(p.id)}">${initials(p.name)}</div>
+      <div class="rank-info">
+        <div class="rank-name">${p.name}</div>
+        <div class="rank-sub">${p.wins}V · ${p.losses}D · WR ${wr}%</div>
+        ${badges ? `<div class="badges-row" style="margin-top:4px">${badges}</div>` : ''}
+      </div>
+      <div class="rank-right">
+        <span class="match-format">#${pos}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function populateSelect(selId, excludeId = null) {
+  const sel = document.getElementById(selId);
+  if (!sel) return;
+  const val = sel.value;
+  sel.innerHTML = sorted().filter(p => excludeId === null || p.id != excludeId).map(p =>
+    `<option value="${p.id}">${p.pos}. ${p.name}</option>`
+  ).join('');
+  if (val) sel.value = val;
+}
+
+function renderPartidoForm() {
+  populateSelect('p-player1');
+  populateSelect('p-player2');
+  const active = challenges.filter(c=>c.status==='active');
+  const sel = document.getElementById('p-challenge-link');
+  sel.innerHTML = '<option value="">Sin desafío vinculado</option>' + active.map(c=>{
+    const f=getP(c.fromId),t=getP(c.toId);
+    return `<option value="${c.id}">${f.name} vs ${t.name} (${c.format})</option>`;
+  }).join('');
+}
+
+function renderChallenges() {
+  populateSelect('ch-from');
+  populateSelect('ch-to');
+  const active = challenges.filter(c=>c.status==='active');
+  const list = document.getElementById('challenge-list');
+  if (!active.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">⚡</div>No hay desafíos activos</div>`;
+    return;
+  }
+  list.innerHTML = active.map(c => {
+    const f = getP(c.fromId), t = getP(c.toId);
+    const dots = [0,1,2].map(i=>`<div class="strike-dot ${i<(c.strikes||0)?'used':''}"></div>`).join('');
+    return `<div class="ch-card">
+      <div class="ch-header">
+        <div>
+          <div class="ch-players">${f.name} <span class="vs">VS</span> ${t.name}</div>
+          <div class="ch-meta">📅 ${fmtDate(c.date)} · <span class="match-format">${c.format}</span></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="dodgeStrike(${c.id})">+ Strike dodge</button>
+      </div>
+      <div class="strikes-display">${dots}<span style="font-size:11px;color:var(--text3);margin-left:6px">Dodges del defensor (${c.strikes||0}/3)</span></div>
+      <div class="ch-actions">
+        <button class="btn btn-success btn-sm" onclick="goToMatchWithChallenge(${c.id})">▶ Registrar partido</button>
+        <button class="btn btn-danger btn-sm" onclick="cancelChallenge(${c.id})">✕ Cancelar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderHistory() {
+  const list = document.getElementById('match-list');
+  if (!matches.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📋</div>Sin partidos registrados aún</div>`;
+    return;
+  }
+  list.innerHTML = [...matches].reverse().map(m => {
+    const w = getP(m.winnerId), l = getP(m.loserId);
+    const wname = w ? w.name : '(eliminado)';
+    const lname = l ? l.name : '(eliminado)';
+    const rankedBadge = m.ranked ? `<span class="badge badge-active" style="font-size:10px">Ranked</span>` : `<span class="badge" style="background:var(--surface2);color:var(--text3);font-size:10px">Amistoso</span>`;
+    return `<div class="match-item">
+      <div>
+        <div><span class="match-winner">🏆 ${wname}</span> <span class="match-loser">vs ${lname}</span></div>
+        <div style="display:flex;gap:6px;margin-top:4px;align-items:center">
+          <span class="match-format">${m.format}</span>
+          ${rankedBadge}
+          ${m.swap ? `<span style="font-size:11px;color:var(--green)">↑ Cambio de rango</span>` : ''}
+        </div>
+      </div>
+      <div class="match-date">${fmtDate(m.date)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderPlayerMgmt() {
+  document.getElementById('player-mgmt-list').innerHTML = sorted().map(p => `
+    <div class="rank-row">
+      <div class="rank-pos">${p.pos}</div>
+      <div class="avatar" style="${avatarStyle(p.id)}">${initials(p.name)}</div>
+      <div class="rank-info">
+        <div class="rank-name">${p.name}</div>
+        <div class="rank-sub">${p.wins}V · ${p.losses}D · Strikes: ${p.strikes}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        ${p.paused
+          ? `<button class="btn btn-ghost btn-sm" onclick="togglePause(${p.id})">▶ Reactivar</button>`
+          : `<button class="btn btn-ghost btn-sm" onclick="togglePause(${p.id})">⏸ Pausar</button>`}
+        <button class="btn btn-danger btn-sm" onclick="removePlayer(${p.id})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+//  LIVE MATCH LOGIC
+// ═══════════════════════════════════════
+let liveMatch = null;
+
+function startMatch() {
+  const p1id = parseInt(document.getElementById('p-player1').value);
+  const p2id = parseInt(document.getElementById('p-player2').value);
+  const format = document.getElementById('p-format').value;
+  const ranked = document.getElementById('p-ranked').value === 'yes';
+  const challengeId = parseInt(document.getElementById('p-challenge-link').value) || null;
+
+  if (p1id === p2id) { showToast('Debes elegir dos jugadores distintos'); return; }
+
+  const p1 = getP(p1id), p2 = getP(p2id);
+
+  if (ranked) {
+    // Validate: p1 should be the challenger (lower = higher pos number)
+    if (p1.pos !== p2.pos + 1 && p2.pos !== p1.pos + 1) {
+      showToast('Para partido Ranked, los jugadores deben ser rangos consecutivos (+1)');
+      return;
+    }
+    const challenger = p1.pos > p2.pos ? p1 : p2;
+    const defender = p1.pos > p2.pos ? p2 : p1;
+    if (hasShield(defender)) {
+      showToast(`${defender.name} tiene escudo activo 🛡 — ${daysLeft(defender.shieldUntil)} días restantes`);
+      return;
+    }
+    if (hasCooldown(challenger, defender.id)) {
+      showToast(`${challenger.name} tiene cooldown de revancha contra ${defender.name}`);
+      return;
+    }
+  }
+
+  liveMatch = { p1id, p2id, format, ranked, challengeId };
+  document.getElementById('partido-form-box').style.display = 'none';
+  document.getElementById('live-match-box').style.display = 'block';
+
+  document.getElementById('lm-av1').style = avatarStyle(p1id) + 'width:52px;height:52px;font-size:18px;margin:0 auto 8px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;border:2px solid rgba(255,255,255,0.2);';
+  document.getElementById('lm-av1').textContent = initials(p1.name);
+  document.getElementById('lm-av2').style = avatarStyle(p2id) + 'width:52px;height:52px;font-size:18px;margin:0 auto 8px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;border:2px solid rgba(255,255,255,0.2);';
+  document.getElementById('lm-av2').textContent = initials(p2.name);
+
+  document.getElementById('lm-name1').textContent = p1.name;
+  document.getElementById('lm-name2').textContent = p2.name;
+  document.getElementById('lm-pos1').textContent = `Rango #${p1.pos}`;
+  document.getElementById('lm-pos2').textContent = `Rango #${p2.pos}`;
+  document.getElementById('lm-format').textContent = format;
+  document.getElementById('lm-ranked-label').textContent = ranked ? '⚡ Partido Ranked — el rango cambia' : '🤝 Partido Amistoso — sin cambio de rango';
+  document.getElementById('lm-btn1').textContent = `🏆 Ganó ${p1.name}`;
+  document.getElementById('lm-btn2').textContent = `🏆 Ganó ${p2.name}`;
+}
+
+function cancelMatch() {
+  liveMatch = null;
+  document.getElementById('partido-form-box').style.display = 'block';
+  document.getElementById('live-match-box').style.display = 'none';
+}
+
+function declareWinner(side) {
+  if (!liveMatch) return;
+  const { p1id, p2id, format, ranked, challengeId } = liveMatch;
+  const winnerId = side === 0 ? p1id : p2id;
+  const loserId  = side === 0 ? p2id : p1id;
+  const winner = getP(winnerId), loser = getP(loserId);
+
+  let swapped = false;
+  let resultMsg = '';
+
+  if (ranked) {
+    // Determine who is the challenger (higher pos number = lower rank)
+    const isWinnerChallenger = winner.pos > loser.pos;
+    if (isWinnerChallenger) {
+      // Challenger wins → swap
+      swapPos(winnerId, loserId);
+      swapped = true;
+      resultMsg = `${winner.name} sube al rango #${loser.pos} 🎉\n${loser.name} baja al rango #${winner.pos}`;
+      setShield(winner); setShield(loser);
+    } else {
+      // Defender wins → no swap, challenger gets cooldown
+      resultMsg = `${winner.name} defiende su rango #${winner.pos} 🛡\n${loser.name} debe esperar 10 días para volver a retar`;
+      setShield(winner);
+      setCooldown(loser, winnerId);
+    }
+    loser.strikes = 0;
+  } else {
+    resultMsg = `Resultado registrado como amistoso.\nNo hay cambio de posición.`;
+  }
+
+  winner.wins++;
+  loser.losses++;
+
+  const matchRecord = {
+    id: matches.length + 1, winnerId, loserId, format, ranked,
+    swap: swapped, challengeId, date: new Date().toISOString()
+  };
+  matches.push(matchRecord);
+
+  if (challengeId) {
+    const ch = challenges.find(c => c.id === challengeId);
+    if (ch) ch.status = 'completed';
+  }
+
+  saveData();
+  cancelMatch();
+  renderAll();
+  showResultModal(winner, loser, swapped, ranked, resultMsg);
+}
+
+// ═══════════════════════════════════════
+//  CHALLENGES
+// ═══════════════════════════════════════
+function launchChallenge() {
+  const fromId = parseInt(document.getElementById('ch-from').value);
+  const toId   = parseInt(document.getElementById('ch-to').value);
+  const format = document.getElementById('ch-format').value;
+  if (fromId === toId) { showToast('Elige dos jugadores distintos'); return; }
+  const from = getP(fromId), to = getP(toId);
+  if (from.pos !== to.pos + 1) { showToast(`Solo puedes retar al jugador inmediatamente superior.\n${from.name} (#${from.pos}) debe retar a alguien en #${from.pos-1}`); return; }
+  if (from.paused || to.paused) { showToast('Uno de los jugadores está en modo pausa ⏸'); return; }
+  if (hasShield(to)) { showToast(`${to.name} tiene escudo activo 🛡 — ${daysLeft(to.shieldUntil)} días restantes`); return; }
+  if (hasCooldown(from, toId)) { showToast(`${from.name} tiene cooldown de revancha contra ${to.name}`); return; }
+  const exists = challenges.find(c=>c.status==='active'&&((c.fromId===fromId&&c.toId===toId)||(c.fromId===toId&&c.toId===fromId)));
+  if (exists) { showToast('Ya hay un desafío activo entre estos jugadores'); return; }
+
+  openModal('Confirmar desafío', `${from.name} (#${from.pos}) reta a ${to.name} (#${to.pos})\nFormato: ${format}\n\nEl desafío se registrará de forma oficial.`, () => {
+    challenges.push({ id: (challenges.length ? Math.max(...challenges.map(c=>c.id)) : 0) + 1, fromId, toId, format, status:'active', strikes:0, date:new Date().toISOString() });
+    saveData();
+    showToast(`⚡ Desafío lanzado: ${from.name} vs ${to.name}`);
+    renderAll();
+  });
+}
+
+function dodgeStrike(cid) {
+  const c = challenges.find(x=>x.id===cid);
+  if (!c) return;
+  const to = getP(c.toId), from = getP(c.fromId);
+  c.strikes = (c.strikes||0) + 1;
+  if (c.strikes >= 3) {
+    openModal('Strike 3 — Dodge automático', `${to.name} rechazó 3 veces.\n\nPierde el puesto automáticamente.\n${from.name} sube de rango sin jugar.`, () => {
+      swapPos(from.id, to.id);
+      setShield(from.id); setShield(to.id);
+      to.strikes = 0;
+      c.status = 'dodged';
+      matches.push({ id: matches.length+1, winnerId:from.id, loserId:to.id, format:c.format, ranked:true, swap:true, challengeId:cid, date:new Date().toISOString(), dodge:true });
+      saveData();
+      showToast(`${from.name} sube por dodge 🎯`);
+      renderAll();
+    });
+  } else {
+    saveData();
+    showToast(`Strike ${c.strikes}/3 registrado para ${to.name}`);
+    renderChallenges();
+  }
+}
+
+function cancelChallenge(cid) {
+  openModal('Cancelar desafío', '¿Cancelar este desafío oficial? Esta acción no se puede deshacer.', () => {
+    const c = challenges.find(x=>x.id===cid);
+    if (c) c.status = 'cancelled';
+    saveData(); renderAll();
+    showToast('Desafío cancelado');
+  });
+}
+
+function goToMatchWithChallenge(cid) {
+  const c = challenges.find(x=>x.id===cid);
+  if (!c) return;
+  nav('partido');
+  document.querySelector('.nav-btn[onclick="nav(\'partido\')"]').classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>{ if(b.getAttribute('onclick')!=="nav('partido')") b.classList.remove('active'); });
+  setTimeout(() => {
+    document.getElementById('p-player1').value = c.fromId;
+    document.getElementById('p-player2').value = c.toId;
+    document.getElementById('p-format').value = c.format;
+    document.getElementById('p-ranked').value = 'yes';
+    document.getElementById('p-challenge-link').value = c.id;
+  }, 100);
+}
+
+// ═══════════════════════════════════════
+//  PLAYER MANAGEMENT
+// ═══════════════════════════════════════
+function registerPlayer() {
+  const name = document.getElementById('reg-name').value.trim();
+  if (!name) { showToast('Escribe un nombre'); return; }
+  if (players.find(p=>p.name.toLowerCase()===name.toLowerCase())) { showToast('Ya existe un jugador con ese nombre'); return; }
+  const pos = players.length + 1;
+  players.push({ id:nextId++, name, pos, wins:0, losses:0, strikes:0, shieldUntil:null, paused:false, pauseUntil:null, cooldowns:{}, joined:new Date().toISOString() });
+  document.getElementById('reg-name').value = '';
+  saveData(); renderAll();
+  showToast(`${name} registrado en posición #${pos} 🎉`);
+}
+
+function removePlayer(id) {
+  const p = getP(id);
+  openModal('Eliminar jugador', `¿Eliminar a "${p.name}" del ranking?\n\nSu historial de partidos se conservará.`, () => {
+    const pos = p.pos;
+    players = players.filter(x=>x.id!==id);
+    players.filter(x=>x.pos>pos).forEach(x=>x.pos--);
+    challenges = challenges.map(c=>{
+      if(c.fromId===id||c.toId===id) return {...c,status:'cancelled'};
+      return c;
+    });
+    saveData(); renderAll();
+    showToast(`${p.name} eliminado del ranking`);
+  });
+}
+
+function togglePause(id) {
+  const p = getP(id);
+  if (p.paused) {
+    p.paused = false; p.pauseUntil = null;
+    showToast(`${p.name} está activo nuevamente ▶`);
+  } else {
+    const d = new Date(); d.setDate(d.getDate()+5);
+    p.paused = true; p.pauseUntil = d.toISOString();
+    showToast(`${p.name} en modo pausa (5 días máx) ⏸`);
+  }
+  saveData(); renderAll();
+}
+
+// ═══════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════
+let modalAction = null;
+
+function openModal(title, body, onConfirm) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = body.replace(/\n/g,'<br>');
+  document.getElementById('modal').classList.add('open');
+  modalAction = onConfirm;
+  document.getElementById('modal-confirm').onclick = () => { closeModal(); modalAction && modalAction(); };
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); modalAction = null; }
+
+function showResultModal(winner, loser, swapped, ranked, detail) {
+  document.getElementById('rm-emoji').textContent = swapped ? '🎉' : ranked ? '🛡' : '✅';
+  document.getElementById('rm-headline').textContent = `¡Ganó ${winner.name}!`;
+  document.getElementById('rm-detail').innerHTML = detail.replace(/\n/g,'<br>');
+  document.getElementById('result-modal').classList.add('open');
+}
+function closeResultModal() {
+  document.getElementById('result-modal').classList.remove('open');
+  nav('ranking');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.nav-btn[onclick="nav(\'ranking\')"]').classList.add('active');
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// Close modals on overlay click
+document.getElementById('modal').addEventListener('click', e => { if(e.target===document.getElementById('modal')) closeModal(); });
+document.getElementById('result-modal').addEventListener('click', e => { if(e.target===document.getElementById('result-modal')) closeResultModal(); });
+</script>
+</body>
+</html>
