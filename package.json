@@ -1,0 +1,23 @@
+{
+  "name": "rankedgarlando",
+  "version": "1.0.0",
+  "description": "Futbolito Ranked - A ranking system for futbolito matches",
+  "main": "futbolito-ranked.html",
+  "scripts": {
+    "test": "echo \"No tests specified\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eli2509200/rankedgarlando.git"
+  },
+  "keywords": [
+    "futbolito",
+    "ranked",
+    "football"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/speed-insights": "^1.0.17"
+  }
+}
