@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ Futbolito Ranked</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --green: #16a34a; --green-light: #dcfce7; --green-dark: #14532d;
+    --gold: #d97706; --gold-light: #fef3c7; --gold-dark: #78350f;
+    --red: #dc2626; --red-light: #fee2e2; --red-dark: #7f1d1d;
+    --blue: #2563eb; --blue-light: #dbeafe; --blue-dark: #1e3a8a;
+    --purple: #7c3aed; --purple-light: #ede9fe;
+    --gray: #6b7280; --gray-light: #f9fafb; --gray-200: #e5e7eb;
+    --bg: #0f172a; --surface: #1e293b; --surface2: #283548; --border: #334155;
+    --text: #f1f5f9; --text2: #94a3b8; --text3: #64748b;
+    --accent: #22d3ee; --accent2: #0891b2;
+    --radius: 12px; --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+  /* --- Estilos de UI (Resumidos para el archivo) --- */
+  .app-header { background: #0c1a2e; border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+  .logo { font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700; color: var(--accent); }
+  .nav-bar { display: flex; gap: 4px; padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; position: sticky; top: 57px; z-index: 40; }
+  .nav-btn { padding: 8px 16px; border-radius: 20px; border: none; background: transparent; color: var(--text2); cursor: pointer; white-space: nowrap; }
+  .nav-btn.active { background: var(--accent2); color: white; }
+  .section { display: none; padding: 16px; max-width: 720px; margin: 0 auto; }
+  .section.active { display: block; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .rank-row { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; border: 2px solid var(--border); }
+  .btn-primary { background: var(--accent2); color: white; width: 100%; padding: 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-size: 12px; margin-bottom: 5px; color: var(--text2); }
+  .form-group select, .form-group input { width: 100%; padding: 10px; background: var(--surface2); border: 1px solid var(--border); color: white; border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="logo">⚽ FUTBOL<span>ITO</span></div>
+</div>
+
+<div class="nav-bar">
+  <button class="nav-btn active" onclick="nav('ranking')">🏆 Ranking</button>
+  <button class="nav-btn" onclick="nav('partido')">⚽ Partido</button>
+  <button class="nav-btn" onclick="nav('desafios')">⚡ Desafíos</button>
+  <button class="nav-btn" onclick="nav('jugadores')">👤 Jugadores</button>
+</div>
+
+<div id="sec-ranking" class="section active">
+  <div class="card" id="rank-list">Cargando datos...</div>
+</div>
+
+<div id="sec-partido" class="section">
+  <div class="card">
+    <div class="form-group"><label>Retador</label><select id="p-player1"></select></div>
+    <div class="form-group"><label>Defensor</label><select id="p-player2"></select></div>
+    <button class="btn-primary" onclick="registrarVictoria()">Registrar Resultado</button>
+  </div>
+</div>
+
+<div id="sec-jugadores" class="section">
+  <div class="card">
+    <div class="form-group"><label>Nuevo Jugador</label><input type="text" id="reg-name"></div>
+    <button class="btn-primary" onclick="registerPlayer()">Añadir</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCiDFvcliSLJekQISEv7oeGBU_kNBtWDBo",
+  authDomain: "rankeds-garlando.firebaseapp.com",
+  databaseURL: "https://rankeds-garlando-default-rtdb.firebaseio.com",
+  projectId: "rankeds-garlando",
+  storageBucket: "rankeds-garlando.firebasestorage.app",
+  messagingSenderId: "5835166265",
+  appId: "1:5835166265:web:399f9ee527c71a91b0f3e8",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const dbRef = ref(db, 'futbolito_data');
+
+let players = [];
+let nextId = 1;
+
+// --- SINCRONIZACIÓN EN TIEMPO REAL ---
+onValue(dbRef, (snapshot) => {
+  const data = snapshot.val();
+  if (data && data.players) {
+    players = data.players;
+    nextId = data.nextId || players.length + 1;
+  } else {
+    // SI NO HAY NADA, CARGAMOS TUS JUGADORES ORIGINALES
+    players = [
+      { id: 1, name: 'José fime', pos: 1, wins: 0, losses: 0 },
+      { id: 2, name: 'Luigi', pos: 2, wins: 0, losses: 0 },
+      { id: 3, name: 'Victor', pos: 3, wins: 0, losses: 0 },
+      { id: 4, name: 'Samuel', pos: 4, wins: 0, losses: 0 },
+      { id: 5, name: 'Maxi', pos: 5, wins: 0, losses: 0 },
+      { id: 6, name: 'Oscar renaut', pos: 6, wins: 0, losses: 0 },
+      { id: 7, name: 'Eli', pos: 7, wins: 0, losses: 0 }
+    ];
+    nextId = 8;
+    saveToFirebase();
+  }
+  renderAll();
+});
+
+function saveToFirebase() {
+  set(dbRef, { players, nextId });
+}
+
+// --- NAVEGACIÓN ---
+window.nav = (id) => {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  // Marcar botón activo (esto requiere lógica de búsqueda de botón o pasar el evento)
+};
+
+// --- RENDERIZADO ---
+function renderAll() {
+  const list = document.getElementById('rank-list');
+  const sorted = [...players].sort((a,b) => a.pos - b.pos);
+  
+  list.innerHTML = sorted.map(p => `
+    <div class="rank-row">
+      <div style="width: 30px; font-weight: bold; color: var(--accent)">${p.pos}</div>
+      <div class="avatar" style="background: #1e3a5f; color: #60a5fa">${p.name[0]}</div>
+      <div style="flex: 1">${p.name}</div>
+      <div style="font-size: 12px; color: var(--text3)">W:${p.wins} / L:${p.losses}</div>
+    </div>
+  `).join('');
+
+  const selects = ['p-player1', 'p-player2'].map(id => document.getElementById(id));
+  const options = sorted.map(p => `<option value="${p.id}">${p.pos}. ${p.name}</option>`).join('');
+  selects.forEach(s => { if(s) s.innerHTML = options; });
+}
+
+// --- ACCIONES ---
+window.registrarVictoria = () => {
+  const p1id = parseInt(document.getElementById('p-player1').value);
+  const p2id = parseInt(document.getElementById('p-player2').value);
+  
+  if(p1id === p2id) return alert("No puede jugar contra sí mismo");
+
+  const winner = players.find(p => p.id === p1id);
+  const loser = players.find(p => p.id === p2id);
+
+  // Lógica de SWAP (Intercambio de posición si el de abajo le gana al de arriba)
+  if (winner.pos > loser.pos) {
+    const oldPos = winner.pos;
+    winner.pos = loser.pos;
+    loser.pos = oldPos;
+    alert(`¡Cambio de rango! ${winner.name} ahora es #${winner.pos}`);
+  }
+
+  winner.wins++;
+  loser.losses++;
+  
+  saveToFirebase();
+};
+
+window.registerPlayer = () => {
+  const name = document.getElementById('reg-name').value;
+  if(!name) return;
+  players.push({ id: nextId++, name, pos: players.length + 1, wins: 0, losses: 0 });
+  document.getElementById('reg-name').value = '';
+  saveToFirebase();
+};
+
+</script>
+</body>
+</html>
