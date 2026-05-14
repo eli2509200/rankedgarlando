@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ Futbolito Ranked</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --green: #16a34a; --green-light: #dcfce7; --green-dark: #14532d;
+    --gold: #d97706; --gold-light: #fef3c7; --gold-dark: #78350f;
+    --red: #dc2626; --red-light: #fee2e2; --red-dark: #7f1d1d;
+    --blue: #2563eb; --blue-light: #dbeafe; --blue-dark: #1e3a8a;
+    --purple: #7c3aed; --purple-light: #ede9fe;
+    --gray: #6b7280; --gray-light: #f9fafb; --gray-200: #e5e7eb;
+    --bg: #0f172a; --surface: #1e293b; --surface2: #283548; --border: #334155;
+    --text: #f1f5f9; --text2: #94a3b8; --text3: #64748b;
+    --accent: #22d3ee; --accent2: #0891b2;
+    --radius: 12px; --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── HEADER ── */
+  .app-header {
+    background: linear-gradient(135deg, #0c1a2e 0%, #0f2744 50%, #0c1a2e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .logo { font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+  .logo span { color: var(--text); }
+  .header-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 12px; color: var(--text2); }
+
+  /* ── NAV ── */
+  .nav-bar {
+    display: flex; gap: 4px; padding: 12px 16px; background: var(--surface);
+    border-bottom: 1px solid var(--border); overflow-x: auto; position: sticky; top: 57px; z-index: 40;
+  }
+  .nav-bar::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    padding: 8px 16px; border-radius: 20px; border: 1px solid transparent;
+    background: transparent; color: var(--text2); font-size: 13px; font-weight: 500;
+    cursor: pointer; white-space: nowrap; transition: all 0.2s; font-family: 'Inter', sans-serif;
+  }
+  .nav-btn:hover { background: var(--surface2); color: var(--text); }
+  .nav-btn.active { background: var(--accent2); color: white; border-color: var(--accent); }
+
+  /* ── SECTIONS ── */
+  .section { display: none; padding: 16px; max-width: 720px; margin: 0 auto; }
+  .section.active { display: block; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+  }
+  .card-title { font-family: 'Rajdhani', sans-serif; font-size: 17px; font-weight: 600; color: var(--accent); margin-bottom: 12px; letter-spacing: 0.5px; }
+
+  /* ── STATS ROW ── */
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; text-align: center; }
+  .stat-num { font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700; color: var(--accent); line-height: 1; }
+  .stat-label { font-size: 11px; color: var(--text2); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── RANKING TABLE ── */
+  .rank-list { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .rank-row {
+    display: flex; align-items: center; gap: 10px; padding: 11px 14px;
+    border-bottom: 1px solid var(--border); background: var(--surface);
+    transition: background 0.15s; cursor: default;
+  }
+  .rank-row:last-child { border-bottom: none; }
+  .rank-row:hover { background: var(--surface2); }
+  .rank-row.top1 { background: linear-gradient(90deg, #1c1200 0%, var(--surface) 70%); border-left: 3px solid var(--gold); }
+  .rank-row.top2 { background: linear-gradient(90deg, #12151a 0%, var(--surface) 70%); border-left: 3px solid #94a3b8; }
+  .rank-row.top3 { background: linear-gradient(90deg, #1a0d05 0%, var(--surface) 70%); border-left: 3px solid #b45309; }
+  .rank-pos { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; min-width: 32px; text-align: center; color: var(--text3); }
+  .rank-pos.gold { color: var(--gold); }
+  .rank-pos.silver { color: #94a3b8; }
+  .rank-pos.bronze { color: #b45309; }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 13px; border: 2px solid var(--border);
+  }
+  .rank-info { flex: 1; min-width: 0; }
+  .rank-name { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rank-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .rank-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .pos-change { font-size: 12px; font-weight: 600; }
+  .up { color: var(--green); } .down { color: var(--red); } .same { color: var(--text3); }
+
+  /* ── BADGES ── */
+  .badge { font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 500; display: inline-block; }
+  .badge-shield { background: #1e3a5f; color: #60a5fa; border: 1px solid #2563eb; }
+  .badge-pause  { background: #2d1b69; color: #a78bfa; border: 1px solid #7c3aed; }
+  .badge-active { background: #14532d; color: #4ade80; border: 1px solid #16a34a; }
+  .badge-cooldown { background: #451a03; color: #fbbf24; border: 1px solid #d97706; }
+  .badge-strike { background: #450a0a; color: #f87171; border: 1px solid #dc2626; }
+  .badges-row { display: flex; gap: 4px; flex-wrap: wrap; }
+
+  /* ── FORMS ── */
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-group input, .form-group select {
+    width: 100%; padding: 10px 12px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text); font-size: 14px; font-family: 'Inter', sans-serif; outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+  .form-group select option { background: var(--surface2); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    padding: 10px 20px; border-radius: var(--radius-sm); border: none;
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif;
+    transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary { background: var(--accent2); color: white; width: 100%; justify-content: center; }
+  .btn-primary:hover { background: var(--accent); color: #0f172a; }
+  .btn-danger { background: var(--red); color: white; }
+  .btn-danger:hover { background: var(--red-dark); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-success { background: var(--green); color: white; }
+  .btn-success:hover { background: var(--green-dark); }
+
+  /* ── CHALLENGE CARDS ── */
+  .ch-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px; margin-bottom: 10px;
+  }
+  .ch-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .ch-players { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); }
+  .ch-players .vs { color: var(--accent); margin: 0 6px; }
+  .ch-meta { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .ch-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .strikes-display { display: flex; gap: 4px; align-items: center; margin-top: 6px; }
+  .strike-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+  .strike-dot.used { background: var(--red); }
+
+  /* ── MATCH HISTORY ── */
+  .match-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .match-item:last-child { border-bottom: none; }
+  .match-winner { font-weight: 600; color: var(--green); }
+  .match-loser { color: var(--text3); }
+  .match-date { font-size: 11px; color: var(--text3); }
+  .match-format { font-size: 11px; background: var(--surface2); border: 1px solid var(--border); padding: 2px 7px; border-radius: 20px; color: var(--text2); }
+
+  /* ── LIVE MATCH ── */
+  .live-match-box {
+    background: linear-gradient(135deg, #0c2340, #0f172a);
+    border: 1px solid var(--accent2); border-radius: var(--radius);
+    padding: 20px; text-align: center; margin-bottom: 12px;
+  }
+  .live-title { font-family: 'Rajdhani', sans-serif; font-size: 13px; letter-spacing: 3px; color: var(--accent); margin-bottom: 16px; }
+  .live-players { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 20px; }
+  .live-player { text-align: center; flex: 1; }
+  .live-player .name { font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; color: var(--text); }
+  .live-player .pos-tag { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .live-vs { font-family: 'Rajdhani', sans-serif; font-size: 32px; font-weight: 700; color: var(--accent); }
+  .format-pill { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 14px; font-size: 12px; color: var(--text2); margin-bottom: 16px; }
+  .winner-btns { display: flex; gap: 10px; justify-content: center; }
+  .winner-btn {
+    flex: 1; max-width: 200px; padding: 12px; border-radius: var(--radius-sm);
+    font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+    cursor: pointer; border: 2px solid transparent; transition: all 0.2s;
+  }
+  .winner-btn.left { background: #0f2e1a; color: var(--green); border-color: var(--green); }
+  .winner-btn.left:hover { background: var(--green); color: white; }
+  .winner-btn.right { background: #2e0f0f; color: var(--red); border-color: var(--red); }
+  .winner-btn.right:hover { background: var(--red); color: white; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100;
+    display: none; align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 24px; max-width: 400px; width: 100%; animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+  .modal-title { font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 10px; color: var(--accent); }
+  .modal-body { font-size: 14px; color: var(--text2); line-height: 1.7; margin-bottom: 18px; }
+  .modal-actions { display: flex; gap: 8px; }
+  .modal-actions .btn { flex: 1; justify-content: center; }
+
+  /* ── RESULT MODAL ── */
+  .result-box { text-align: center; padding: 20px 0; }
+  .result-emoji { font-size: 52px; margin-bottom: 8px; }
+  .result-headline { font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .result-detail { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #1e293b; border: 1px solid var(--border); color: var(--text);
+    padding: 10px 20px; border-radius: 20px; font-size: 13px; z-index: 200;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap;
+    max-width: 90vw; text-align: center;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ── SECTION HEADER ── */
+  .section-header { margin-bottom: 14px; }
+  .section-header h2 { font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700; color: var(--text); }
+  .section-header p { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+  /* ── RULE ITEMS ── */
+  .rule-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .rule-item:last-child { border-bottom: none; }
+  .rule-title { font-weight: 600; font-size: 14px; color: var(--accent); margin-bottom: 4px; }
+  .rule-body { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align: center; padding: 32px; color: var(--text3); font-size: 14px; }
+  .empty-icon { font-size: 36px; margin-bottom: 8px; }
+
+  /* ── DIVIDER ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  /* ── PROFILE CARD ── */
+  .profile-header { display: flex; align-items: center; gap: 14px; padding: 16px; }
+  .profile-avatar { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; border: 3px solid var(--accent); flex-shrink: 0; }
+  .profile-name { font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700; color: var(--text); }
+  .profile-pos { font-size: 13px; color: var(--text2); }
+
+  @media (max-width: 480px) {
+    .stats-row { grid-template-columns: repeat(3, 1fr); }
+    .rank-row { padding: 10px 10px; gap: 8px; }
+    .section { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="logo">⚽ FUTBOL<span>ITO</span></div>
+  <div class="header-badge" id="header-date"></div>
+</div>
+
+<div class="nav-bar">
+  <button class="nav-btn active" onclick="nav('ranking')">🏆 Ranking</button>
+  <button class="nav-btn" onclick="nav('partido')">⚽ Partido</button>
+  <button class="nav-btn" onclick="nav('desafios')">⚡ Desafíos</button>
+  <button class="nav-btn" onclick="nav('historial')">📋 Historial</button>
+  <button class="nav-btn" onclick="nav('jugadores')">👤 Jugadores</button>
+  <button class="nav-btn" onclick="nav('reglamento')">📜 Reglamento</button>
+</div>
+
+<div id="sec-ranking" class="section active">
+  <div class="section-header"><h2>Tabla de Ranking</h2><p>Posiciones actuales del torneo</p></div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-num" id="s-players">0</div><div class="stat-label">Jugadores</div></div>
+    <div class="stat-box"><div class="stat-num" id="s-matches">0</div><div class="stat-label">Partidos</div></div>
+    <div class="stat-box"><div class="stat-num" id="s-challenges">0</div><div class="stat-label">Desafíos</div></div>
+  </div>
+  <div class="rank-list" id="rank-list">Cargando ranking...</div>
+</div>
+
+<div id="sec-partido" class="section">
+  <div class="section-header"><h2>Registrar Partido</h2><p>Inicia un partido y declara al ganador</p></div>
+  <div id="partido-form-box" class="card">
+    <div class="card-title">⚽ Nuevo Partido</div>
+    <div class="form-group"><label>Jugador 1 (Retador / Iniciador)</label><select id="p-player1"></select></div>
+    <div class="form-group"><label>Jugador 2</label><select id="p-player2"></select></div>
+    <div class="form-group">
+      <label>Formato</label>
+      <select id="p-format">
+        <option value="Clásico">Clásico — Mejor de 3 (a 5 goles)</option>
+        <option value="Maratón">Maratón — Mejor de 5 (a 5 goles)</option>
+        <option value="Relámpago">Relámpago — 1 partido a 7 goles</option>
+        <option value="Resistencia">Resistencia — Mejor de 5 (a 3 goles)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>¿Es un desafío de rango?</label>
+      <select id="p-ranked"><option value="yes">Sí</option><option value="no">No</option></select>
+    </div>
+    <div class="form-group"><label>Desafío asociado (opcional)</label><select id="p-challenge-link"></select></div>
+    <button class="btn btn-primary" onclick="startMatch()">Iniciar partido ▶</button>
+  </div>
+
+  <div id="live-match-box" style="display:none">
+    <div class="live-match-box">
+      <div class="live-title">🔴 PARTIDO EN VIVO</div>
+      <div class="live-players">
+        <div class="live-player"><div class="avatar" id="lm-av1"></div><div class="name" id="lm-name1"></div><div class="pos-tag" id="lm-pos1"></div></div>
+        <div class="live-vs">VS</div>
+        <div class="live-player"><div class="avatar" id="lm-av2"></div><div class="name" id="lm-name2"></div><div class="pos-tag" id="lm-pos2"></div></div>
+      </div>
+      <div class="format-pill" id="lm-format"></div>
+      <div class="winner-btns">
+        <button class="winner-btn left" id="lm-btn1" onclick="declareWinner(0)"></button>
+        <button class="winner-btn right" id="lm-btn2" onclick="declareWinner(1)"></button>
+      </div>
+    </div>
+    <button class="btn btn-ghost" style="width:100%" onclick="cancelMatch()">Cancelar partido</button>
+  </div>
+</div>
+
+<div id="sec-desafios" class="section">
+  <div class="section-header"><h2>Desafíos de Rango</h2><p>Reta al jugador inmediatamente superior</p></div>
+  <div class="card">
+    <div class="form-group"><label>Retador</label><select id="ch-from"></select></div>
+    <div class="form-group"><label>Defensor</label><select id="ch-to"></select></div>
+    <div class="form-group">
+      <label>Formato</label>
+      <select id="ch-format"><option value="Clásico">Clásico</option></select>
+    </div>
+    <button class="btn btn-primary" onclick="launchChallenge()">Lanzar desafío ⚡</button>
+  </div>
+  <div id="challenge-list"></div>
+</div>
+
+<div id="sec-historial" class="section">
+  <div class="rank-list" id="match-list"></div>
+</div>
+
+<div id="sec-jugadores" class="section">
+  <div class="card">
+    <div class="form-group"><label>Nombre o apodo</label><input type="text" id="reg-name" /></div>
+    <button class="btn btn-primary" onclick="registerPlayer()">Registrar jugador</button>
+  </div>
+  <div class="rank-list" id="player-mgmt-list"></div>
+</div>
+
+<div id="sec-reglamento" class="section">
+  <div class="section-header"><h2>Reglamento Oficial</h2></div>
+  <div class="card" id="rules-inject">
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="modal-confirm">Confirmar</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="result-modal">
+  <div class="modal-box">
+    <div class="result-box"><div class="result-emoji" id="rm-emoji"></div><div class="result-headline" id="rm-headline"></div><div class="result-detail" id="rm-detail"></div></div>
+    <button class="btn btn-primary" onclick="closeResultModal()">Ver ranking</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCiDFvcliSLJekQISEv7oeGBU_kNBtWDBo",
+  authDomain: "rankeds-garlando.firebaseapp.com",
+  databaseURL: "https://rankeds-garlando-default-rtdb.firebaseio.com",
+  projectId: "rankeds-garlando",
+  storageBucket: "rankeds-garlando.firebasestorage.app",
+  messagingSenderId: "5835166265",
+  appId: "1:5835166265:web:399f9ee527c71a91b0f3e8",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const dbRef = ref(db, 'futbolito_v2');
+
+// VARIABLES GLOBALES
+let players = [], challenges = [], matches = [], nextId = 1;
+let liveMatch = null;
+
+const AVATAR_PALETTE = [['#1e3a5f','#60a5fa'],['#14532d','#4ade80'],['#451a03','#fbbf24'],['#4a044e','#e879f9'],['#7f1d1d','#f87171'],['#0c4a6e','#38bdf8']];
+
+// --- SYNC ---
+onValue(dbRef, (snapshot) => {
+  const data = snapshot.val();
+  if (data && data.players) {
+    players = data.players;
+    challenges = data.challenges || [];
+    matches = data.matches || [];
+    nextId = data.nextId || players.length + 1;
+    renderAll();
+  } else {
+    initDefaultCloud();
+  }
+});
+
+function sync() { set(dbRef, { players, challenges, matches, nextId }); }
+
+function initDefaultCloud() {
+  const names = ['José fime','Luigi','Victor','Samuel','Maxi','Oscar renaut','Eli','Hiram','Gael','Julio','Bonilla','Franco','Corpus','Orlando','Owen','Justin','Jeshua','Vela','Janeth','Georgie','Afu','Tortuga'];
+  players = names.map((name, i) => ({
+    id: i + 1, name, pos: i + 1, wins: 0, losses: 0, strikes: 0,
+    shieldUntil: null, paused: false, cooldowns: {}, joined: new Date().toISOString()
+  }));
+  nextId = players.length + 1;
+  sync();
+}
+
+// --- HELPERS ---
+const getP = (id) => players.find(p => p.id == id);
+const sorted = () => [...players].sort((a,b) => a.pos - b.pos);
+const initials = (n) => n.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const avatarStyle = (id) => { const c = AVATAR_PALETTE[(id - 1) % 6]; return `background:${c[0]};color:${c[1]};`; };
+const hasShield = (p) => p.shieldUntil && new Date(p.shieldUntil) > new Date();
+
+// --- NAVEGACIÓN ---
+window.nav = (id) => {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  if(event) event.target.classList.add('active');
+  renderAll();
+};
+
+// --- RENDER ---
+function renderAll() {
+  renderRanking(); renderSelects(); renderChallenges(); renderHistory(); renderPlayerMgmt();
+  document.getElementById('header-date').textContent = new Date().toLocaleDateString('es-MX', { weekday:'short', day:'numeric', month:'short' });
+}
+
+function renderRanking() {
+  document.getElementById('s-players').textContent = players.length;
+  document.getElementById('s-matches').textContent = matches.length;
+  document.getElementById('rank-list').innerHTML = sorted().map(p => `
+    <div class="rank-row ${p.pos<=3?'top'+p.pos:''}">
+      <div class="rank-pos">${p.pos}</div>
+      <div class="avatar" style="${avatarStyle(p.id)}">${initials(p.name)}</div>
+      <div class="rank-info"><div class="rank-name">${p.name}</div><div class="rank-sub">W:${p.wins} L:${p.losses}</div></div>
+      ${hasShield(p)?'<span class="badge badge-shield">🛡</span>':''}
+    </div>`).join('');
+}
+
+function renderSelects() {
+    const opts = sorted().map(p => `<option value="${p.id}">${p.pos}. ${p.name}</option>`).join('');
+    ['p-player1', 'p-player2', 'ch-from', 'ch-to'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.innerHTML = opts;
+    });
+}
+
+// --- ACCIONES ---
+window.startMatch = () => {
+  const p1id = document.getElementById('p-player1').value;
+  const p2id = document.getElementById('p-player2').value;
+  if(p1id == p2id) return showToast("Mismo jugador");
+  const p1 = getP(p1id), p2 = getP(p2id);
+  liveMatch = { p1id, p2id, format: document.getElementById('p-format').value, ranked: document.getElementById('p-ranked').value == 'yes' };
+  document.getElementById('partido-form-box').style.display = 'none';
+  document.getElementById('live-match-box').style.display = 'block';
+  document.getElementById('lm-name1').textContent = p1.name;
+  document.getElementById('lm-name2').textContent = p2.name;
+  document.getElementById('lm-btn1').textContent = "Ganó " + p1.name;
+  document.getElementById('lm-btn2').textContent = "Ganó " + p2.name;
+};
+
+window.declareWinner = (side) => {
+  const winner = getP(side == 0 ? liveMatch.p1id : liveMatch.p2id);
+  const loser = getP(side == 0 ? liveMatch.p2id : liveMatch.p1id);
+  if(liveMatch.ranked && winner.pos > loser.pos) {
+    const tmp = winner.pos; winner.pos = loser.pos; loser.pos = tmp;
+    winner.shieldUntil = new Date(Date.now() + 14*86400000).toISOString();
+  }
+  winner.wins++; loser.losses++;
+  matches.push({ winnerId: winner.id, loserId: loser.id, date: new Date().toISOString(), format: liveMatch.format });
+  sync();
+  cancelMatch();
+  showResultModal(winner.name);
+};
+
+window.cancelMatch = () => {
+  document.getElementById('partido-form-box').style.display = 'block';
+  document.getElementById('live-match-box').style.display = 'none';
+};
+
+window.registerPlayer = () => {
+  const name = document.getElementById('reg-name').value;
+  if(!name) return;
+  players.push({ id: nextId++, name, pos: players.length + 1, wins: 0, losses: 0, joined: new Date().toISOString() });
+  document.getElementById('reg-name').value = '';
+  sync();
+};
+
+function renderHistory() {
+  document.getElementById('match-list').innerHTML = [...matches].reverse().slice(0,10).map(m => `
+    <div class="match-item"><span class="match-winner">🏆 ${getP(m.winnerId)?.name}</span> vs ${getP(m.loserId)?.name}</div>
+  `).join('');
+}
+
+function renderChallenges() { /* Lógica de retos se sincroniza con sync() */ }
+function renderPlayerMgmt() { /* Lista de gestión */ }
+
+function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2000); }
+function showResultModal(n) { document.getElementById('rm-headline').textContent = "¡Ganó " + n + "!"; document.getElementById('result-modal').classList.add('open'); }
+window.closeResultModal = () => document.getElementById('result-modal').classList.remove('open');
+window.closeModal = () => document.getElementById('modal').classList.remove('open');
+</script>
+</body>
+</html>
